@@ -1,4 +1,4 @@
-- hosts: dockerservers:raspis
+- hosts: "{{ hosts }}"
 
   tasks:
   - name: Append GRUB_CMDLINE_LINUX_DEFAULT variable to /etc/default/grub
