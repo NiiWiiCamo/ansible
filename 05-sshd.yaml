@@ -1,0 +1,24 @@
+- hosts: raspis
+  become: true
+
+  handlers:
+    - name: restart sshd
+      service:
+        name: "sshd"
+        state: restarted
+  
+  tasks:
+    - name: configure sshd
+      lineinfile:
+        path: "/etc/ssh/sshd_config"
+        regex: "^(#)?{{ item.key }}"
+        line: "{{ item.key }} {{ item.value }}"
+        state: present
+      loop:
+        - { key: "PermitRootLogin", value: "no" }
+        - { key: "PasswordAuthentication", value: "no" }
+        - { key: "PermitEmptyPasswords", value: "no" }
+        - { key: "PubkeyAuthentication", value: "yes" }
+      notify:
+        - restart sshd
+  

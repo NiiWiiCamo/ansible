@@ -1,0 +1,61 @@
+- hosts: raspis
+  gather_facts: true
+  become: true
+
+  vars:
+    ipv4_rules: |
+      # This file is updated via Ansible. Manual changes will be overwritten!
+      *filter
+      :INPUT DROP [0:0]
+      :FORWARD ACCEPT [0:0]
+      :OUTPUT ACCEPT [0:0]
+      -A INPUT -p icmp -m state --state NEW -m comment --comment "allow ICMP" -j ACCEPT
+      -A INPUT -p tcp --dport 22 -m state --state NEW -m comment --comment "allow ssh" -j ACCEPT
+      -A INPUT -m state --state ESTABLISHED,RELATED -m comment --comment "allow reply traffic" -j ACCEPT
+      COMMIT
+    
+    ipv6_rules: |
+      # This file is updated via Ansible. Manual changes will be overwritten!
+      *filter
+      :INPUT DROP [0:0]
+      :FORWARD ACCEPT [0:0]
+      :OUTPUT ACCEPT [0:0]
+      -A INPUT -p icmp -m state --state NEW -m comment --comment "allow ICMP" -j ACCEPT
+      -A INPUT -p tcp --dport 22 -m state --state NEW -m comment --comment "allow ssh" -j ACCEPT
+      -A INPUT -m state --state ESTABLISHED,RELATED -m comment --comment "allow reply traffic" -j ACCEPT
+      COMMIT
+    
+    iptables_load: |
+      #!/bin/bash
+      /sbin/iptables-restore < /etc/iptables.up.conf
+      /sbin/ip6tables-restore < /etc/ip6tables.up.conf
+
+  tasks:
+
+    - name: update ruleset for ipv4
+      ansible.builtin.copy:
+        content: "{{ ipv4_rules }}"
+        dest: /etc/iptables.up.conf
+        mode: '600'
+        owner: root
+        group: root
+    
+    - name: update ruleset for ipv6
+      ansible.builtin.copy:
+        content: "{{ ipv6_rules }}"
+        dest: /etc/ip6tables.up.conf
+        mode: '600'
+        owner: root
+        group: root
+
+    - name: reload rules now
+      ansible.builtin.shell:
+        cmd: /sbin/iptables-restore < /etc/iptables.up.conf && /sbin/ip6tables-restore < /etc/ip6tables.up.conf
+
+    - name: setup iptables loading on link up
+      ansible.builtin.copy:
+        content: "{{ iptables_load }}"
+        dest: /etc/network/if-pre-up.d/iptables
+        mode: '700'
+        owner: root
+        group: root

@@ -1,0 +1,133 @@
+- hosts: opnsense
+  connection: local
+  gather_facts: no
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ ansible_host }}"
+      api_credential_file: '/home/nilsblume/ansible/.opnsense-test.key'
+      ssl_verify: false
+
+  tasks:
+    - name: pull aliases
+      ansibleguy.opnsense.list:
+        target: 'alias'
+      register: existing_entries
+
+    - name: print aliases
+      ansible.builtin.debug:
+        var: existing_entries.data
+
+    - name: remove alias
+      ansibleguy.opnsense.alias:
+        name: 'net_lingen'
+        state: 'absent'
+
+    - name: add alias rfc1918
+      ansibleguy.opnsense.alias:
+        name: 'RFC1918'
+        type: 'network'
+        content: ['10.0.0.0/8','172.16.0.0/12','192.168.0.0/16']
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'hosts_unifi_aps'
+        content: ['10.10.0.4','10.10.0.5','10.10.0.6']
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_holodeck_RPI'
+        content: '10.10.20.25'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_pbs'
+        content: '10.10.0.42'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_proxbox'
+        type: 'network'
+        content: ['10.10.20.251','10.10.20.250','10.10.20.252']
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_proxbox_dmz'
+        content: '10.10.60.250'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_rpi_homeassistant'
+        content: '10.10.20.8'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_samsung_r45'
+        content: '10.10.60.45'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_vlab_opnsense'
+        content: '10.10.0.50'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_vpnserver'
+        content: ['5.45.110.38','2a03:4000:6:2593::ab:b0','vpn.nilsblume.de']
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'host_www'
+        content: ['5.181.50.80','2a03:4000:3f:6::31:2f','www.nilsblume.de']
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'net_cloudvlan'
+        type: 'network'
+        content: ['10.255.255.0/24','10.255.251.0/24']
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'net_lingen'
+        type: 'network'
+        content: '10.20.0.0/16'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'net_bremerhaven'
+        type: 'network'
+        content: '10.30.0.0/16'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'net_ovpn_deviceaccess'
+        type: 'network'
+        content: '10.10.187.0/24'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'net_wunstorf'
+        type: 'network'
+        content: '10.40.0.0/16'
+
+    - name: add alias
+      ansibleguy.opnsense.alias:
+        name: 'grp_remotenetworks'
+        type: 'network'
+        content: ['10.255.0.0/16','10.20.0.0/16','10.30.0.0/16','10.40.0.0/16','10.10.90.2/32']
+
+    - name: add port alias
+      ansibleguy.opnsense.alias:
+        name: 'port_homeassistant'
+        type: 'port'
+        content: '8123'
+
+    - name: add port alias
+      ansibleguy.opnsense.alias:
+        name: 'port_mongodb'
+        type: 'port'
+        content: '27017'
+
+    - name: reload alias module
+      ansibleguy.opnsense.reload:
+        target: 'alias'
+

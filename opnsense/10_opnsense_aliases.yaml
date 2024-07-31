@@ -1,0 +1,126 @@
+- hosts: opnsense
+  connection: local
+  gather_facts: no
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ ansible_host }}"
+      api_credential_file: '/home/nilsblume/ansible/.opnsense-test.key'
+      ssl_verify: false
+
+  tasks:
+#    - name: cleanup
+#      ansibleguy.opnsense.alias:
+#        name: 'host_proxbox'
+#        state: 'absent'
+
+    - name: edit aliases
+      ansibleguy.opnsense.alias_multi:
+        aliases:
+
+          rfc1918:
+            type: 'network'
+            content: ['10.0.0.0/8','172.16.0.0/12','192.168.0.0/16']
+            description: 'Private networks as definded by RFC1918'
+
+          hosts_unifi:
+            content: ['10.10.0.4','10.10.0.5','10.10.0.6']
+            description: 'DHCP reservations for Unifi APs etc.'
+
+          host_holodeck_RPI:
+            content: '10.10.20.25'
+            description: 'RPi3 inside 3D printer'
+
+          host_pbs:
+            content: '10.10.0.42'
+            description: 'Proxmox Backup Server, Lenovo Tiny'
+
+          host_proxbox:
+            content:
+              - '10.10.20.251'
+              - '10.10.20.250'
+              - '10.10.20.252'
+            description: 'Proxmox VE Server, LAN IPs, Tower'
+
+          host_proxbox_dmz:
+            content: '10.10.60.250'
+            description: 'Proxmox VE Server, DMZ IP, Tower'
+
+          host_rpi_homeassistant:
+            content: '10.10.20.8'
+            description: 'RPi4 Home Assistant OS'
+
+          host_samsung_r45:
+            content: '10.10.60.45'
+            description: 'Retro XP Notebook, WiFi'
+
+          host_vlab_opnsense:
+            content: '10.10.0.50'
+            description: 'VLAB router, VM on Proxbox'
+
+          host_vpnserver:
+            content:
+              - '5.45.110.38'
+              - '2a03:4000:6:2593::ab:b0'
+              - 'vpn.nilsblume.de'
+            description: 'netcup cloud vServer'
+
+          host_www:
+            content:
+              -  '5.181.50.80'
+              - '2a03:4000:3f:6::31:2f'
+              - 'www.nilsblume.de'
+            description: 'netcup cloud vServer'
+
+          net_cloudvlan:
+            type: 'network'
+            content:
+              - '10.255.255.0/24'
+              - '10.255.251.0/24'
+            description: 'netcup cloud VLAN'
+
+          net_lingen:
+            type: 'network'
+            content: '10.20.0.0/16'
+            description: 'LAN supernet Fritzbox Mutti'
+
+          net_bremerhaven:
+            type: 'network'
+            content: '10.30.0.0/16'
+            description: 'LAN supernet Fritzbox Opa'
+
+          net_wunstorf:
+            type: 'network'
+            content: '10.40.0.0/16'
+            description: 'deprecated, LAN supernet Fritzbox Papa'
+
+          net_ovpn_deviceaccess:
+            type: 'network'
+            content: '10.10.187.0/24'
+            description: 'deprecated'
+            state: 'absent'
+
+
+          grp_remotenetworks:
+            type: 'network'
+            content:
+              - '10.255.0.0/16'
+              - '10.20.0.0/16'
+              - '10.30.0.0/16'
+              - '10.40.0.0/16'
+              - '10.10.90.2/32'
+            description: 'remote routed networks'
+
+          port_homeassistant:
+            type: 'port'
+            content: '8123'
+            description: 'default http port for homeassistant'
+
+          port_mongodb:
+            type: 'port'
+            content: '27017'
+            description: 'default mongodb port'
+
+    - name: reload alias module
+      ansibleguy.opnsense.reload:
+        target: 'alias'
+

@@ -1,0 +1,10 @@
+- name: Test Playbook
+  hosts: proxmox
+  tasks:
+    - name: Pingcheck
+      ansible.builtin.ping:
+
+    - name: Print message
+      ansible.builtin.debug:
+        msg: Hello world!
+

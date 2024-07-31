@@ -1,0 +1,49 @@
+- hosts: opnsense
+  connection: local
+  gather_facts: yes
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ ansible_host }}"
+      api_credential_file: '/home/nilsblume/ansible/.opnsense-test.key'
+      ssl_verify: false
+
+    ansibleguy.opnsense.rule_multi:
+      match_fields:
+        - 'description'
+      key_field: 'description'
+
+  tasks:
+#    - name: install rule api module
+#      ansibleguy.opnsense.package:
+#        name: 'os-firewall'
+#        action: 'install'
+
+    - name: pull rules
+      ansibleguy.opnsense.list:
+        target: 'rule'
+      register: existing_entries
+
+    - name: print rules
+      ansible.builtin.debug:
+        var: existing_entries.data
+
+#    - name: anti-lockout
+#      ansibleguy.opnsense.rule:
+#        source_net: 'any'
+#        destination: 'self'
+
+    - name: modify firewall rules
+      ansibleguy.opnsense.rule_multi:
+        rules:
+          anti-lockout:
+            source_net: 'any'
+            destination: 'self'
+            action: 'pass'
+
+          unifi_internet:
+            source: 'hosts_unifi'
+            destination_invert: true
+            destination: 'RFC1918'
+            action: 'pass'
+            interface:
+              - 'lan'

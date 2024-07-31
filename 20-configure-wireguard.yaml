@@ -1,0 +1,65 @@
+- hosts: raspis
+  become: true
+
+  vars:
+    wireguard_endpoint: vpn.8nb.de:51821
+    wireguard_peer_key: Dj58LLGQ8ldKIromVAyN+QxTv4w39xAEVwTFFaxtkmw=
+    wireguard_keepalive: "30"
+    wireguard_allowedips: "10.255.253.0/24"
+    wireguard_configname: "wg8nb"
+
+  tasks:
+    
+    - name: create wireguard keys directory
+      ansible.builtin.file:
+        path: /etc/wireguard/keys
+        state: directory
+        mode: "600"
+        owner: root
+        group: root
+
+    - name: check if wg keyfile exists already
+      ansible.builtin.stat:
+        path: /etc/wireguard/keys/{{ wireguard_configname }}.key
+      register: keyfile
+
+    - name: generate wg private key
+      ansible.builtin.shell:
+        cmd: wg genkey > /etc/wireguard/keys/{{ wireguard_configname }}.key
+      when: not keyfile.stat.exists
+
+    - name: get private key from file
+      ansible.builtin.shell:
+        cmd: cat /etc/wireguard/keys/{{ wireguard_configname }}.key
+      register: wireguard_private_key
+      when: keyfile.stat.exists
+      
+    - name: update wireguard config
+      ansible.builtin.copy:
+        content: |
+          [Interface]
+          Address = {{ wireguard_interface_ip }}
+          PrivateKey = {{ wireguard_private_key.stdout }}
+
+          [Peer]
+          Endpoint = {{ wireguard_endpoint }}
+          PublicKey = {{ wireguard_peer_key }}
+          PersistentKeepalive = {{ wireguard_keepalive }}
+          AllowedIPs = {{ wireguard_allowedips }}
+        dest: /etc/wireguard/{{ wireguard_configname }}.conf
+    
+    - name: generate public key
+      ansible.builtin.shell:
+        cmd: cat /etc/wireguard/keys/{{ wireguard_configname }}.key | wg pubkey
+      register: wg_pubkey
+
+    - name: print wg pubkey
+      ansible.builtin.debug:
+        msg: the wireguard public key is {{ wg_pubkey.stdout }}
+      when: wg_pubkey is defined
+    
+    - name: enable wireguard tunnel including autostart
+      ansible.builtin.systemd_service:
+        state: restarted
+        enabled: true
+        name: wg-quick@{{ wireguard_configname }}.service

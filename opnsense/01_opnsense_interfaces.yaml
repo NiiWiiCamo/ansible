@@ -1,0 +1,33 @@
+- hosts: opnsense
+  connection: local
+  gather_facts: no
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ ansible_host }}"
+      api_credential_file: '/home/nilsblume/ansible/.opnsense-test.key'
+      ssl_verify: false
+
+  tasks:
+    - name: add LAN VLAN20
+      ansibleguy.opnsense.interface_vlan:
+        description: '20_LAN'
+        interface: "{{ lan_interface }}"
+        vlan: 20
+
+    - name: add GUEST VLAN40
+      ansibleguy.opnsense.interface_vlan:
+        description: '40_GUEST'
+        interface: "{{ lan_interface }}"
+        vlan: 40
+
+    - name: add DMZ VLAN60
+      ansibleguy.opnsense.interface_vlan:
+        description: '60_DMZ'
+        interface: "{{ lan_interface }}"
+        vlan: 60
+
+    - name: add FORTIDMZ VLAN666
+      ansibleguy.opnsense.interface_vlan:
+        description: '666_FORTIDMZ'
+        interface: "{{ lan_interface }}"
+        vlan: 666

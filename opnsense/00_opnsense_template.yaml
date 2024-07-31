@@ -1,0 +1,11 @@
+- hosts: opnsense
+  connection: local
+  gather_facts: no
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ ansible_host }}"
+      api_credential_file: '/home/nilsblume/ansible/.opnsense-test.key'
+      ssl_verify: false
+
+  tasks:
+    -

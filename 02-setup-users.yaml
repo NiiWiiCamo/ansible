@@ -1,0 +1,14 @@
+- hosts: raspis
+
+  tasks:
+  - name: install cronjob ssh-import-id
+    ansible.builtin.cron:
+      job: ssh-import-id gh:niiwiicamo
+      minute: 0
+      name: import ssh keys hourly
+
+  - name: install reboot cronjob ssh-import-id
+    ansible.builtin.cron:
+      job: ssh-import-id gh:niiwiicamo
+      special_time: "reboot"
+      name: import ssh keys at reboot

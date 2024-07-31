@@ -1,0 +1,32 @@
+- hosts: opnsense
+  connection: local
+  gather_facts: no
+  module_defaults:
+    group/ansibleguy.opnsense.all:
+      firewall: "{{ ansible_host }}"
+      api_credential_file: '/home/nilsblume/ansible/.opnsense-test.key'
+      ssl_verify: false
+
+  tasks:
+    - name: Unbound basic config
+      ansibleguy.opnsense.unbound_general:
+        enabled: true
+        port: 53
+        interfaces:
+          - 'opt1'
+          - 'opt2'
+          - 'opt3'
+        local_zone_type: 'transparent'
+        register_dhcp_static_mappings: true
+        dhcp_domain: 'home.nilsblume.de'
+
+    - name: Unbound VLAB DNS forwarding config dc1
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'vlab.home.nilsblume.de'
+        target: '192.168.1.51'
+
+    - name: Unbound VLAB DNS forwarding config dc2
+      ansibleguy.opnsense.unbound_forward:
+        domain: 'vlab.home.nilsblume.de'
+        target: '192.168.1.52'
+

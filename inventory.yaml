@@ -1,0 +1,25 @@
+cloudserver:
+  hosts:
+    vpn.nilsblume.de:
+    www.nilsblume.de:
+
+proxmox:
+  hosts:
+    proxbox.home.nilsblume.de:
+
+opnsense:
+  hosts:
+    10.10.20.35:
+      wan_interface: em0
+      lan_interface: em1
+
+pfsense:
+  hosts:
+    home.nilsblume.de:
+
+raspis:
+  hosts:
+    hgv-ham-rpi-002:
+      ansible_host: 10.10.20.8
+      ansible_user: ansible
+      wireguard_interface_ip: "10.255.253.4/32"
