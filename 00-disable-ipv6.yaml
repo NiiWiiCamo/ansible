@@ -1,4 +1,4 @@
-- hosts: "{{ hosts }}"
+- hosts: dockerservers
 
   tasks:
   - name: Append GRUB_CMDLINE_LINUX_DEFAULT variable to /etc/default/grub
