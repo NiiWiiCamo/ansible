@@ -1,0 +1,66 @@
+- hosts: dockerservers
+
+  tasks:
+    - name: check if naspool is mounted
+      stat:
+        path: /mnt/naspool/.ismounted
+      register: naspool_ismounted
+
+    - name: start emby container
+      when: naspool_ismounted.stat.exists
+      community.docker.docker_container:
+        name: emby
+        image: linuxserver/emby:latest
+        state: started
+        # recreate: true
+        env:
+          PUID: "{{ DOCKER_PUID }}"
+          PGID: "{{ DOCKER_PGID }}"
+          TZ: "{{ DOCKER_TZ }}"
+        mounts:
+          - source: "emby-config"
+            target: "/config"
+            type: "volume"
+          - source: "/mnt/naspool/media"
+            target: "/media"
+            type: "bind"
+          - source: "/mnt/naspool/backup"
+            target: "/backup"
+            type: "bind"
+        networks:
+          - name: "reverseproxy"
+        ports:
+          - "8920:8920"
+          - "8096:8096"
+        labels:
+          traefik.enable: "true"
+          traefik.http.routers.emby.rule: "Host(`emby.home.nilsblume.de`)"
+          traefik.http.routers.emby.tls: "true"
+    
+    - name: start calibre container
+      when: naspool_ismounted.stat.exists
+      community.docker.docker_container:
+        name: calibre
+        image: linuxserver/calibre:latest
+        state: started
+        # recreate: true
+        env:
+          PUID: "{{ DOCKER_PUID }}"
+          PGID: "{{ DOCKER_PGID }}"
+          TZ: "{{ DOCKER_TZ }}"
+        mounts:
+          - source: "calibre-config"
+            target: "/config"
+            type: "volume"
+          - source: "calibre-library"
+            target: "/media"
+            type: "volume"
+          - source: "/mnt/naspool/media/ebooks"
+            target: "/import/ebooks"
+            type: "bind"
+        networks:
+          - name: "reverseproxy"
+        labels:
+          traefik.enable: "true"
+          traefik.http.routers.calibre.rule: "Host(`calibre.home.nilsblume.de`)"
+          traefik.http.routers.calibre.tls: "true"

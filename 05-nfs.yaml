@@ -1,0 +1,12 @@
+- hosts: dockerservers
+  become: true
+  
+  tasks:
+  - name: mount naspool
+    ansible.posix.mount:
+      src: 10.10.0.251:/naspool/encrypted
+      opts: rw,sync,soft
+      path: /mnt/naspool
+      state: mounted
+      boot: true
+      fstype: nfs

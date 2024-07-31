@@ -1,0 +1,53 @@
+- hosts: dockerservers
+  become: true
+
+  tasks:
+  - name: install packages for docker
+    ansible.builtin.apt:
+      pkg:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+      state: latest
+      update_cache: true
+
+  - name: add docker repo gpg key
+    ansible.builtin.apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+
+  - name: add docker repo
+    ansible.builtin.apt_repository:
+      repo: deb https://download.docker.com/linux/ubuntu noble stable
+      state: present
+
+  - name: create docker group
+    ansible.builtin.group:
+      name: docker
+      state: present
+      gid: 9001
+
+  - name: create docker user
+    ansible.builtin.user:
+      name: dockerino
+      comment: docker user
+      uid: 9001
+      group: docker
+      shell: /bin/bash
+      create_home: yes
+      groups: docker,sudo
+      append: yes
+      password: $6$rounds=656000$1h78d0w98uhf2$FG93sgGWG1yQwPtP8VquR4rg0TGfUSoZRyGS8JU7q86OXoOiGr0Ghp0b3jJPi8VfnpIthVWrj8cyU5V51Ij8q.
+
+  - name: add ansible user to docker group
+    ansible.builtin.user:
+      name: ansible
+      groups: docker
+      append: yes
+
+  - name: install docker-ce and docker compose
+    ansible.builtin.apt:
+      pkg:
+        - docker-ce
+        - docker-compose-plugin
+      state: latest
+      update_cache: true

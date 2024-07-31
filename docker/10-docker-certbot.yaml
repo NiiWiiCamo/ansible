@@ -1,0 +1,52 @@
+- hosts: dockerservers
+  gather_facts: no
+
+  tasks:
+  - name: create docker reverseproxy network
+    community.docker.docker_network:
+      name: reverseproxy
+      state: present
+
+  - name: 
+    community.docker.docker_container:
+      name: traefik
+      image: traefik:latest
+      state: started
+      command:
+        - "--api.insecure=true"
+        - "--providers.docker=true"
+        - "--providers.docker.exposedbydefault=false"
+        - "--providers.docker.network=reverseproxy"
+        - "--providers.file.directory=/etc/traefik/dynamic"
+        - "--entrypoints.web.address=:80"
+        - "--entrypoints.websecure.address=:443"
+        - "--serverstransport.insecureskipverify=true"
+      ports:
+        - "8080:8080"
+        - "80:80"
+        - "443:443"
+      restart_policy: "unless-stopped"
+      mounts:
+        - source: "/var/run/docker.sock"
+          target: "/var/run/docker.sock"
+          type: "bind"
+          consistency: "default"
+          read_only: true
+        - source: "traefik_config"
+          target: "/etc/traefik/dynamic"
+          type: "volume"
+        - source: "acme"
+          target: "/etc/traefik/acme"
+          type: "volume"
+        - source: "certs"
+          target: "/etc/certs"
+          type: "volume"
+      networks:
+        - name: "reverseproxy"
+      labels:
+        traefik.enable: "true"
+        traefik.http.routers.traefik.rule: "Host(`dash.home.nilsblume.de`)"
+        traefik.http.routers.traefik.service: "api@internal"
+        traefik.http.routers.traefik.tls: "true"
+        traefik.http.routers.traefik.middlewares: "auth-traefik"
+        traefik.http.middlewares.auth-traefik.basicauth.users: "traefikadmin:$$2y$$05$$0uZc8tP2z5gERkFuRYLVAemKbp8Qvt2Ey4prPByDniGj4AZcDXfSC"

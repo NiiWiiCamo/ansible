@@ -1,0 +1,180 @@
+- hosts: dockerservers
+  gather_facts: yes
+
+  vars:
+    DDNS_USER: "2138ejpda"
+    DDNS_PASS: "lkjvfh9sd8"
+    NETCUP_APIKEY: "ajhtNXZEeThlNmE0bTdUMTQ2NzkyM3IyNUd3UzNiSUgxb2Y5Ul"
+    NETCUP_APIPASS: "U/GVj7VOdnhhd2U9ZkT1Zmt3RHGVoBbrl/J3b1aDRkOf71WLUk"
+    NETCUP_CUSTOMERID: "95302"
+    DDNS_EMAIL: "dockerhome@8nb.de"
+    authhookfile: |
+      #!/bin/sh
+      apk --no-cache --no-progress --quiet add curl
+      ACME_PREFIX="_acme-challenge"
+      if [ -z "${DDNS_HOST}" ]; then DDNS_HOST=${ACME_PREFIX}; else DDNS_HOST=${ACME_PREFIX}.${DDNS_HOST}; fi
+      PAYLOAD="force=true&user=${DDNS_USER}&password=${DDNS_PASS}&txt=${CERTBOT_VALIDATION}&domain=${DDNS_DOMAIN}&host=${DDNS_HOST}&create=true"
+      curl -sSL -X POST --data "${PAYLOAD}" ${DDNS_SCRIPT} && echo "set dns record to ${CERTBOT_VALIDATION}" && sleep 600
+
+  tasks:
+  - name: create docker reverseproxy network
+    community.docker.docker_network:
+      name: reverseproxy
+      state: present
+  
+  - name: make sure certbot hook volume exists
+    community.docker.docker_volume:
+      name: certbot-hooks
+      state: present
+
+  - name: insert auth-hook.sh file content
+    become: true
+    ansible.builtin.copy:
+      content: "{{ authhookfile }}"
+      dest: /var/lib/docker/volumes/certbot-hooks/_data/auth-hook.sh
+      mode: 0744
+
+  - name: owndyndns
+    community.docker.docker_container:
+      name: owndyndns
+      image: niiwiicamo/owndyndns:latest
+      state: started
+      # pull: true
+      # recreate: true
+      env:
+        DDNS_USER: "{{ DDNS_USER }}"
+        DDNS_PASS: "{{ DDNS_PASS }}"
+        NETCUP_APIKEY: "{{ NETCUP_APIKEY }}"
+        NETCUP_APIPASS: "{{ NETCUP_APIPASS }}"
+        NETCUP_CUSTOMERID: "{{ NETCUP_CUSTOMERID }}"
+        DDNS_DEBUG: "0"
+        DDNS_LOG: "0"
+        DDNS_RETURNIP: "0"
+        DDNS_ALLOWCREATE: "1"
+        DDNS_RESTRICTDOMAIN: "0"
+      restart_policy: "unless-stopped"
+      networks:
+        - name: "reverseproxy"
+
+  - name: certbot-docker-home-nilsblume-de
+    vars:
+      CERTBOT_DOMAIN: "docker.home.nilsblume.de"
+    community.docker.docker_container:
+      name: certbot-docker-home
+      image: certbot/certbot:latest
+      state: absent
+      # recreate: true
+      env:
+        DDNS_USER: "{{ DDNS_USER }}"
+        DDNS_PASS: "{{ DDNS_PASS }}"
+        DDNS_HOST: "docker.home"
+        DDNS_DOMAIN: "nilsblume.de"
+        DDNS_SCRIPT: "http://owndyndns:8080/update.php"
+      mounts:
+        - source: "traefik_config"
+          target: "/etc/traefik/dynamic"
+          type: "volume"
+        - source: "letsencrypt"
+          target: "/etc/letsencrypt"
+          type: "volume"
+        - source: "certbot-hooks"
+          target: "/hooks"
+          type: "volume"
+        - source: "certbot-logs"
+          target: "/var/log/letsencrypt"
+          type: "volume"
+      networks:
+        - name: "reverseproxy"
+      command: |
+        certonly 
+        --manual 
+        --preferred-challenges=dns 
+        --agree-tos 
+        --email {{ DDNS_EMAIL }} 
+        --non-interactive 
+        --manual-auth-hook /hooks/auth-hook.sh 
+        -d {{ CERTBOT_DOMAIN }} 
+        -d *.{{ CERTBOT_DOMAIN }}
+
+  - name: certbot-dash-home-nilsblume-de
+    vars:
+      CERTBOT_DOMAIN: "dash.home.nilsblume.de"
+    community.docker.docker_container:
+      name: certbot-dash-home
+      image: certbot/certbot:latest
+      state: absent
+      # recreate: true
+      env:
+        DDNS_USER: "{{ DDNS_USER }}"
+        DDNS_PASS: "{{ DDNS_PASS }}"
+        DDNS_HOST: "dash.home"
+        DDNS_DOMAIN: "nilsblume.de"
+        DDNS_SCRIPT: "http://owndyndns:8080/update.php"
+      mounts:
+        - source: "traefik_config"
+          target: "/etc/traefik/dynamic"
+          type: "volume"
+        - source: "letsencrypt"
+          target: "/etc/letsencrypt"
+          type: "volume"
+        - source: "certbot-hooks"
+          target: "/hooks"
+          type: "volume"
+        - source: "certbot-logs"
+          target: "/var/log/letsencrypt"
+          type: "volume"
+      networks:
+        - name: "reverseproxy"
+      command: |
+        certonly 
+        --manual 
+        --preferred-challenges=dns 
+        --agree-tos 
+        --email {{ DDNS_EMAIL }} 
+        --non-interactive 
+        --manual-auth-hook /hooks/auth-hook.sh 
+        -d {{ CERTBOT_DOMAIN }} 
+        -d *.{{ CERTBOT_DOMAIN }}
+
+
+  - name: certbot-home-nilsblume-de  # reminder to change name
+    vars:
+      CERTBOT_DOMAIN: "home.nilsblume.de"  # reminder to change name
+    community.docker.docker_container:
+      name: certbot-home  # reminder to change name
+      image: certbot/certbot:latest
+      # state: present
+      # recreate: true
+      env:
+        DDNS_USER: "{{ DDNS_USER }}"
+        DDNS_PASS: "{{ DDNS_PASS }}"
+        DDNS_HOST: "home"  # reminder to change name
+        DDNS_DOMAIN: "nilsblume.de"
+        DDNS_SCRIPT: "http://owndyndns:8080/update.php"
+      mounts:
+        - source: "traefik_config"
+          target: "/etc/traefik/dynamic"
+          type: "volume"
+        - source: "letsencrypt"
+          target: "/etc/letsencrypt"
+          type: "volume"
+        - source: "certbot-hooks"
+          target: "/hooks"
+          type: "volume"
+        - source: "certbot-logs"
+          target: "/var/log/letsencrypt"
+          type: "volume"
+      networks:
+        - name: "reverseproxy"
+      command: |
+        certonly 
+        --manual 
+        --preferred-challenges=dns 
+        --agree-tos 
+        --email {{ DDNS_EMAIL }} 
+        --non-interactive 
+        --manual-auth-hook /hooks/auth-hook.sh 
+        -d {{ CERTBOT_DOMAIN }} 
+        -d *.{{ CERTBOT_DOMAIN }}
+
+

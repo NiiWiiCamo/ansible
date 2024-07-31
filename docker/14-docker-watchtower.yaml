@@ -1,0 +1,17 @@
+- hosts: dockerservers
+  gather_facts: no
+
+  tasks:
+  - name: watchtower
+    community.docker.docker_container:
+      name: watchtower
+      image: containrrr/watchtower:latest
+      state: started
+      env:
+        WATCHTOWER_LABEL_ENABLE: "true"
+      mounts:
+        - source: "/var/run/docker.sock"
+          target: "/var/run/docker.sock"
+          type: "bind"
+          consistency: "default"
+      command: "--interval 3600"

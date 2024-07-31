@@ -1,0 +1,26 @@
+- hosts: dockerservers
+
+  tasks:
+  - name: Append GRUB_CMDLINE_LINUX_DEFAULT variable to /etc/default/grub
+    become: true
+    ansible.builtin.lineinfile:
+      path: /etc/default/grub
+      insertafter: EOF
+      line: 'GRUB_CMDLINE_LINUX_DEFAULT="ipv6.disable=1 quiet splash"'
+
+  - name: Append GRUB_CMDLINE_LINUX variable to /etc/default/grub
+    become: true
+    ansible.builtin.lineinfile:
+      path: /etc/default/grub
+      insertafter: EOF
+      line: 'GRUB_CMDLINE_LINUX="ipv6.disable=1"'
+
+  - name: Run grub2-mkconfig to update /boot/grub/grub.cfg
+    become: true
+    ansible.builtin.command:
+      cmd: update-grub
+
+  - name: reboot host
+    become: true
+    ansible.builtin.reboot:
+      reboot_timeout: 60

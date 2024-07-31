@@ -1,0 +1,74 @@
+- hosts: dockerservers
+  gather_facts: yes
+
+  vars:
+    traefikcertfile: |
+      tls:
+        certificates:
+          - certFile: /etc/letsencrypt/live/docker.home.nilsblume.de/fullchain.pem
+            keyFile: /etc/letsencrypt/live/docker.home.nilsblume.de/privkey.pem
+          - certFile: /etc/letsencrypt/live/dash.home.nilsblume.de/fullchain.pem
+            keyFile: /etc/letsencrypt/live/dash.home.nilsblume.de/privkey.pem
+          - certFile: /etc/letsencrypt/live/home.nilsblume.de/fullchain.pem
+            keyFile: /etc/letsencrypt/live/home.nilsblume.de/privkey.pem
+
+  tasks:
+  - name: create docker reverseproxy network
+    community.docker.docker_network:
+      name: reverseproxy
+      state: present
+  
+  - name: make sure traefik_config volume exists
+    community.docker.docker_volume:
+      name: traefik_config
+      state: present
+  
+  - name: insert traefik cert file config
+    become: true
+    ansible.builtin.copy:
+      content: "{{ traefikcertfile }}"
+      dest: /var/lib/docker/volumes/traefik_config/_data/certificates.yaml
+
+  - name: traefik
+    community.docker.docker_container:
+      name: traefik
+      image: traefik:latest
+      state: started
+      # recreate: true
+      command:
+        - "--api.insecure=true"
+        - "--providers.docker=true"
+        - "--providers.docker.exposedbydefault=false"
+        - "--providers.docker.network=reverseproxy"
+        - "--providers.file.directory=/etc/traefik/dynamic"
+        - "--entrypoints.web.address=:80"
+        - "--entrypoints.websecure.address=:443"
+        - "--serverstransport.insecureskipverify=true"
+      ports:
+        - "8080:8080"
+        - "80:80"
+        - "443:443"
+      restart_policy: "unless-stopped"
+      mounts:
+        - source: "/var/run/docker.sock"
+          target: "/var/run/docker.sock"
+          type: "bind"
+          consistency: "default"
+          read_only: true
+        - source: "traefik_config"
+          target: "/etc/traefik/dynamic"
+          type: "volume"
+        - source: "letsencrypt"
+          target: "/etc/letsencrypt"
+          type: "volume"
+          read_only: true
+      networks:
+        - name: "reverseproxy"
+      labels:
+        traefik.enable: "true"
+        traefik.http.routers.traefik.rule: "Host(`dash.home.nilsblume.de`)"
+        traefik.http.routers.traefik.service: "api@internal"
+        traefik.http.routers.traefik.tls: "true"
+        traefik.http.routers.traefik.middlewares: "auth-traefik"
+        traefik.http.middlewares.auth-traefik.basicauth.users: "traefikadmin:$2y$05$0uZc8tP2z5gERkFuRYLVAemKbp8Qvt2Ey4prPByDniGj4AZcDXfSC"
+

@@ -11,6 +11,7 @@
       - nfs-client
 
 - hosts: raspis
+  gather_facts: yes
   become: yes
 
   tasks:

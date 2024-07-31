@@ -1,4 +1,4 @@
-- hosts: raspis
+- hosts: dockerservers
 
   tasks:
   - name: install cronjob ssh-import-id

@@ -1,0 +1,9 @@
+- hosts: all
+  gather_facts: yes
+  become: yes
+
+  tasks:
+  - name: netstat
+    shell: /bin/netstat -tulpn
+    register: netstat_result
+  - debug: msg="{{netstat_result.stdout_lines}}"
