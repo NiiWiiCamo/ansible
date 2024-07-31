@@ -1,5 +1,16 @@
+- hosts: dockerservers
+  become: yes
+
+  tasks:
+  - name: install tools
+    ansible.builtin.apt:
+      update_cache: yes
+      cache_valid_time: 3600
+      pkg:
+      - net-tools
+      - nfs-client
+
 - hosts: raspis
-  gather_facts: yes
   become: yes
 
   tasks:

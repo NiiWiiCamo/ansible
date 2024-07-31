@@ -23,3 +23,13 @@ raspis:
       ansible_host: 10.10.20.8
       ansible_user: ansible
       wireguard_interface_ip: "10.255.253.4/32"
+      
+dockerservers:
+  hosts:
+    vm-docker.home.nilsblume.de:
+      ansible_host: 10.10.0.41
+      ansible_user: ansible
+  vars:
+    DOCKER_PUID: "9001"
+    DOCKER_PGID: "9001"
+    DOCKER_TZ: "Europe/Berlin"
