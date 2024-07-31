@@ -1,7 +1,0 @@
-- name: "Install sudo package"
-  hosts: pfsense
-  package:
-    name:
-      - pfSense-pkg-sudo
-    state: present
-
