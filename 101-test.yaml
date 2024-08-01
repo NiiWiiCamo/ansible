@@ -1,0 +1,14 @@
+- hosts: www.nilsblume.de
+  tasks:
+    - name: write test env to file via shell
+      ansible.builtin.shell:
+        cmd: echo $TEST_ENV_VARIABLE > test.txt
+    
+    - name: get text content
+      ansible.builtin.command:
+        cmd: cat test.txt
+      register: command_output
+    
+    - name: print result
+      ansible.builtin.debug:
+        msg: "{{ command_output.stdout }}"
