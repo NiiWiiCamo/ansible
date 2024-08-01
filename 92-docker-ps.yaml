@@ -1,4 +1,4 @@
-- hosts: all
+- hosts: dockerservers
   gather_facts: yes
 
   tasks:

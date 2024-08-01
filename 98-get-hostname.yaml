@@ -1,0 +1,9 @@
+- hosts: all
+  become: false
+  gather_facts: true
+
+  tasks:
+
+    - name: show hostname
+      debug:
+        msg: "Host: {{ ansible_hostname }} has FQDN: {{ ansible_nodename }}"
