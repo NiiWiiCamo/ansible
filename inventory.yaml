@@ -1,7 +1,9 @@
 cloudserver:
   hosts:
     vpn.nilsblume.de:
+      ansible_user: nilsblume
     www.nilsblume.de:
+      ansible_user: nilsblume
 
 proxmox:
   hosts:
