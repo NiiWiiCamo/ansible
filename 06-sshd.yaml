@@ -19,6 +19,7 @@
         - { key: "PasswordAuthentication", value: "no" }
         - { key: "PermitEmptyPasswords", value: "no" }
         - { key: "PubkeyAuthentication", value: "yes" }
+        - { key: "MaxSessions", value: "3" }
       notify:
         - restart sshd
   
